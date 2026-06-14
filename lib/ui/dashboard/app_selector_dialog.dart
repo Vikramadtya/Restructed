@@ -1,6 +1,5 @@
 import 'dart:io';
-import 'package:flutter/widgets.dart';
-import 'package:macos_ui/macos_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 
@@ -77,62 +76,65 @@ class AppSelectorDialogState extends State<AppSelectorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return MacosAlertDialog(
-      appIcon: const MacosIcon(LucideIcons.monitor, size: 56),
+    return AlertDialog(
+      icon: const Icon(LucideIcons.monitor, size: 56),
       title: const Text('Select Application'),
-      message: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MacosTextField(
-            placeholder: 'Search for an app...',
-            prefix: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: MacosIcon(LucideIcons.search, size: 16),
+      content: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search for an app...',
+                prefixIcon: Icon(LucideIcons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: filterApps,
             ),
-            onChanged: filterApps,
-          ),
-          const Gap(16),
-          SizedBox(
-            height: 300,
-            child: isLoading
-                ? const Center(child: ProgressCircle())
-                : filteredApps.isEmpty
-                ? const Center(child: Text('No applications found.'))
-                : ListView.builder(
-                    itemCount: filteredApps.length,
-                    itemBuilder: (context, index) {
-                      final appName = filteredApps[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop(appName);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                          decoration: BoxDecoration(
-                            border: Border(bottom: BorderSide(color: MacosColors.systemGrayColor.withValues(alpha: 0.2))),
+            const Gap(16),
+            SizedBox(
+              height: 300,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredApps.isEmpty
+                  ? const Center(child: Text('No applications found.'))
+                  : ListView.builder(
+                      itemCount: filteredApps.length,
+                      itemBuilder: (context, index) {
+                        final appName = filteredApps[index];
+                        return InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop(appName);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.monitor, size: 20, color: Colors.grey),
+                                const Gap(16),
+                                Expanded(child: Text(appName, style: const TextStyle(fontSize: 16))),
+                                const Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey),
+                              ],
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              const MacosIcon(LucideIcons.monitor, size: 16, color: MacosColors.systemGrayColor),
-                              const Gap(12),
-                              Expanded(child: Text(appName)),
-                              const MacosIcon(LucideIcons.chevronRight, size: 16, color: MacosColors.systemGrayColor),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
-      primaryButton: PushButton(
-        controlSize: ControlSize.large,
-        secondary: true,
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
-      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ],
     );
   }
 }

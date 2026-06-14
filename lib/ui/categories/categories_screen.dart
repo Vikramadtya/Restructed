@@ -1,7 +1,7 @@
-import 'package:flutter/widgets.dart';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:gap/gap.dart';
@@ -70,32 +70,38 @@ class CategoriesScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Categories',
-                    style: MacosTheme.of(context).typography.largeTitle.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                   ).animate().fadeIn().slideX(),
                   const Gap(8),
-                  Text(
+                  const Text(
                     'Organize your blocking rules with categories.',
-                    style: TextStyle(color: MacosColors.systemGrayColor),
+                    style: TextStyle(color: Colors.grey),
                   ).animate().fadeIn(delay: 100.ms),
                 ],
               ),
             ),
-            PushButton(
-              controlSize: ControlSize.large,
+            ElevatedButton.icon(
               onPressed: () => showCategoryDialog(context, ref),
-              child: const Text('Add Category'),
+              icon: const Icon(LucideIcons.plus),
+              label: const Text('Add Category'),
             ).animate().scale(delay: 100.ms),
           ],
         ),
-        const Gap(24),
-        MacosTextField(
-          placeholder: 'Search categories...',
+        const Gap(32),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Search categories...',
+            prefixIcon: const Icon(LucideIcons.search),
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          ),
           onChanged: (val) =>
               ref.read(searchQueryProvider.notifier).setQuery(val),
-          prefix: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: MacosIcon(LucideIcons.search, size: 16),
-          ),
         ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
         const Gap(24),
         Expanded(
@@ -104,7 +110,7 @@ class CategoriesScreen extends ConsumerWidget {
                   child: Text(
                     'No categories found.',
                     style: TextStyle(
-                      color: MacosTheme.of(context).typography.body.color,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 )
@@ -140,7 +146,7 @@ class CategoriesScreen extends ConsumerWidget {
   }
 }
 
-class CategoryCard extends ConsumerWidget {
+class CategoryCard extends ConsumerStatefulWidget {
   final Category category;
   final int ruleCount;
 
@@ -150,141 +156,167 @@ class CategoryCard extends ConsumerWidget {
     required this.ruleCount,
   });
 
+  @override
+  ConsumerState<CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends ConsumerState<CategoryCard> {
+  bool _isHovering = false;
+
   Color getCategoryColor(String? name) {
-    if (name == null) return MacosColors.systemGrayColor;
+    if (name == null) return Colors.grey;
     final lower = name.toLowerCase();
-    if (lower.contains('social')) return MacosColors.systemPurpleColor;
+    if (lower.contains('social')) return Colors.purpleAccent;
     if (lower.contains('entertainment') || lower.contains('video')) {
-      return MacosColors.systemRedColor;
+      return Colors.redAccent;
     }
-    if (lower.contains('news')) return MacosColors.systemBlueColor;
-    if (lower.contains('gaming')) return MacosColors.systemGreenColor;
-    if (lower.contains('shop')) return MacosColors.systemYellowColor;
-    return MacosColors.systemGrayColor;
+    if (lower.contains('news')) return Colors.blueAccent;
+    if (lower.contains('gaming')) return Colors.greenAccent;
+    if (lower.contains('shop')) return Colors.orangeAccent;
+    return Colors.grey;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final color = getCategoryColor(category.name);
-    final theme = MacosTheme.of(context);
-    final isDark = MacosTheme.brightnessOf(context) == Brightness.dark;
+  Widget build(BuildContext context) {
+    final color = getCategoryColor(widget.category.name);
+    final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: () {
-        ref.read(selectedCategoryIdProvider.notifier).setCategory(category.id);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.canvasColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDark
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.05)
-                : const Color(0xFF000000).withValues(alpha: 0.05),
-          ),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: const Color(0xFF000000).withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: MacosIconButton(
-                  icon: const MacosIcon(
-                    LucideIcons.edit2,
-                    color: MacosColors.systemGrayColor,
-                    size: 20,
-                  ),
-                  onPressed: () => showCategoryDialog(
-                    context,
-                    ref,
-                    existingCategory: category,
-                  ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: () {
+          ref.read(selectedCategoryIdProvider.notifier).setCategory(widget.category.id);
+        },
+        child: AnimatedContainer(
+          duration: 200.ms,
+          decoration: BoxDecoration(
+            color: widget.category.isActive 
+                ? theme.colorScheme.surface.withValues(alpha: 0.8) 
+                : theme.colorScheme.surface.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _isHovering
+                  ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                  : Colors.white.withValues(alpha: 0.05),
+              width: _isHovering ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              if (_isHovering && widget.category.isActive)
+                BoxShadow(
+                  color: color.withValues(alpha: 0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
                 ),
-              ),
-              const Spacer(),
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: category.icon != null && category.icon!.isNotEmpty
-                      ? Text(
-                          category.icon!,
-                          style: const TextStyle(fontSize: 28),
-                        )
-                      : MacosIcon(LucideIcons.folder, color: color, size: 28),
-                ),
-              ),
-              const Gap(12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      category.name,
-                      style: TextStyle(
-                        color: theme.typography.body.color,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (category.syncStatus == 'staged')
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: ProgressCircle(),
-                      ),
-                    ),
-                  if (category.syncStatus == 'failed')
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: MacosIcon(LucideIcons.alertCircle, color: MacosColors.systemRedColor, size: 16),
-                    ),
-                ],
-              ),
-              const Gap(4),
-              Text(
-                '$ruleCount sites',
-                style: const TextStyle(color: MacosColors.systemGrayColor, fontSize: 12),
-              ),
-              const Spacer(),
-              MacosSwitch(
-                value: category.isActive,
-                activeColor: const MacosColor(0xFF007AFF),
-                onChanged: (val) async {
-                  try {
-                    final daemonApi = ref.read(daemonApiProvider);
-                    final categoryRepo = ref.read(categoryRepositoryProvider);
-                    final updatedCategory = category.copyWith(isActive: val, syncStatus: 'staged');
-                    await categoryRepo.updateCategory(updatedCategory);
-                    await daemonApi.triggerSync();
-                    
-                    ref.invalidate(categoriesProvider);
-                    ref.invalidate(rulesByCategoryProvider);
-                  } catch (e) {
-                    // Handled implicitly by daemonApi failure states, or talker.
-                  }
-                },
-              ),
             ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: const Icon(
+                          LucideIcons.edit2,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () => showCategoryDialog(
+                          context,
+                          ref,
+                          existingCategory: widget.category,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: widget.category.icon != null && widget.category.icon!.isNotEmpty
+                            ? Text(
+                                widget.category.icon!,
+                                style: const TextStyle(fontSize: 32),
+                              )
+                            : Icon(LucideIcons.folder, color: color, size: 32),
+                      ),
+                    ),
+                    const Gap(16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.category.name,
+                            style: TextStyle(
+                              color: theme.textTheme.bodyLarge?.color,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (widget.category.syncStatus == 'staged')
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        if (widget.category.syncStatus == 'failed')
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: Icon(LucideIcons.alertCircle, color: Colors.redAccent, size: 16),
+                          ),
+                      ],
+                    ),
+                    const Gap(4),
+                    Text(
+                      '${widget.ruleCount} rules',
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                    const Spacer(),
+                    Switch(
+                      value: widget.category.isActive,
+                      activeColor: theme.colorScheme.primary,
+                      onChanged: (val) async {
+                        try {
+                          final daemonApi = ref.read(daemonApiProvider);
+                          final categoryRepo = ref.read(categoryRepositoryProvider);
+                          final updatedCategory = widget.category.copyWith(isActive: val, syncStatus: 'staged');
+                          await categoryRepo.updateCategory(updatedCategory);
+                          await daemonApi.triggerSync();
+                          
+                          ref.invalidate(categoriesProvider);
+                          ref.invalidate(rulesByCategoryProvider);
+                        } catch (e) {
+                          // Handled implicitly by daemonApi failure states, or talker.
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

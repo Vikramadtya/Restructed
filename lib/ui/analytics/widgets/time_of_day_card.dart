@@ -1,7 +1,7 @@
 import 'dart:math';
-import 'package:flutter/widgets.dart';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:gap/gap.dart';
 import 'package:restructed/backend/analytics/block_attempt.dart';
 
@@ -12,6 +12,7 @@ class TimeOfDayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     int morning = 0; // 6am - 12pm
     int afternoon = 0; // 12pm - 6pm
     int evening = 0; // 6pm - 12am
@@ -35,84 +36,90 @@ class TimeOfDayCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: MacosTheme.of(context).canvasColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'When Are You Distracted?',
-              style: MacosTheme.of(context).typography.title2.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const Gap(32),
-            SizedBox(
-              height: 200,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: maxValueWithPadding,
-                  barTouchData: const BarTouchData(enabled: true),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          final style = MacosTheme.of(context).typography.caption1.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: MacosColors.systemGrayColor,
-                          );
-                          String text;
-                          switch (value.toInt()) {
-                            case 0:
-                              text = 'Morning';
-                              break;
-                            case 1:
-                              text = 'Afternoon';
-                              break;
-                            case 2:
-                              text = 'Evening';
-                              break;
-                            case 3:
-                              text = 'Night';
-                              break;
-                            default:
-                              text = '';
-                              break;
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(text, style: style),
-                          );
-                        },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'When Are You Distracted?',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Gap(40),
+                SizedBox(
+                  height: 220,
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: maxValueWithPadding,
+                      barTouchData: const BarTouchData(enabled: true),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (double value, TitleMeta meta) {
+                              final style = theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              );
+                              String text;
+                              switch (value.toInt()) {
+                                case 0:
+                                  text = 'Morning';
+                                  break;
+                                case 1:
+                                  text = 'Afternoon';
+                                  break;
+                                case 2:
+                                  text = 'Evening';
+                                  break;
+                                case 3:
+                                  text = 'Night';
+                                  break;
+                                default:
+                                  text = '';
+                                  break;
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 12.0),
+                                child: Text(text, style: style),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                       ),
-                    ),
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      barGroups: [
+                        makeGroup(0, morning.toDouble(), Colors.orangeAccent),
+                        makeGroup(1, afternoon.toDouble(), Colors.blueAccent),
+                        makeGroup(2, evening.toDouble(), Colors.purpleAccent),
+                        makeGroup(3, night.toDouble(), Colors.indigoAccent),
+                      ],
                     ),
                   ),
-                  gridData: const FlGridData(show: false),
-                  borderData: FlBorderData(show: false),
-                  barGroups: [
-                    makeGroup(0, morning.toDouble(), MacosColors.systemOrangeColor),
-                    makeGroup(1, afternoon.toDouble(), MacosColors.systemBlueColor),
-                    makeGroup(2, evening.toDouble(), MacosColors.systemPurpleColor),
-                    makeGroup(3, night.toDouble(), MacosColors.systemIndigoColor),
-                  ],
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -125,12 +132,12 @@ class TimeOfDayCard extends StatelessWidget {
         BarChartRodData(
           toY: y,
           color: color,
-          width: 22,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          width: 28,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
             toY: y == 0 ? 5 : y * 1.5,
-            color: color.withValues(alpha: 0.1),
+            color: color.withValues(alpha: 0.15),
           ),
         ),
       ],

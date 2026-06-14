@@ -1,6 +1,4 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart' show TimeOfDay;
-import 'package:macos_ui/macos_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import '../rule_dialog.dart' show RuleMode;
@@ -43,41 +41,37 @@ class RuleEnforcementLogic extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildSectionHeader(LucideIcons.clock, 'Enforcement Logic'),
+        buildSectionHeader(context, LucideIcons.clock, 'Enforcement Logic'),
         Row(
           children: [
             Expanded(
-              child: PushButton(
-                controlSize: ControlSize.large,
-                secondary: ruleMode != RuleMode.duration,
-                onPressed: () => onRuleModeChanged(RuleMode.duration),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    MacosIcon(LucideIcons.timer, size: 16),
-                    Gap(8),
-                    Text('Countdown Timer'),
-                  ],
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ruleMode == RuleMode.duration ? theme.colorScheme.primary : theme.colorScheme.surface,
+                  foregroundColor: ruleMode == RuleMode.duration ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+                  elevation: ruleMode == RuleMode.duration ? 4 : 0,
                 ),
+                onPressed: () => onRuleModeChanged(RuleMode.duration),
+                icon: const Icon(LucideIcons.timer, size: 16),
+                label: const Text('Countdown Timer'),
               ),
             ),
             const Gap(8),
             Expanded(
-              child: PushButton(
-                controlSize: ControlSize.large,
-                secondary: ruleMode != RuleMode.schedule,
-                onPressed: () => onRuleModeChanged(RuleMode.schedule),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    MacosIcon(LucideIcons.calendarDays, size: 16),
-                    Gap(8),
-                    Text('Recurring Schedule'),
-                  ],
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ruleMode == RuleMode.schedule ? theme.colorScheme.primary : theme.colorScheme.surface,
+                  foregroundColor: ruleMode == RuleMode.schedule ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+                  elevation: ruleMode == RuleMode.schedule ? 4 : 0,
                 ),
+                onPressed: () => onRuleModeChanged(RuleMode.schedule),
+                icon: const Icon(LucideIcons.calendarDays, size: 16),
+                label: const Text('Recurring Schedule'),
               ),
             ),
           ],
@@ -92,6 +86,8 @@ class RuleEnforcementLogic extends StatelessWidget {
   }
 
   Widget buildDurationSection(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Column(
       children: [
         Row(
@@ -103,13 +99,13 @@ class RuleEnforcementLogic extends StatelessWidget {
                 children: [
                   const Text('Indefinite Block', style: TextStyle(fontWeight: FontWeight.bold)),
                   const Gap(4),
-                  Text('Keep this blocked forever until manually disabled.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                  const Text('Keep this blocked forever until manually disabled.', style: TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ),
-            MacosSwitch(
+            Switch(
               value: isIndefinite,
-              activeColor: const MacosColor(0xFF007AFF),
+              activeColor: theme.colorScheme.primary,
               onChanged: onIndefiniteChanged,
             ),
           ],
@@ -121,22 +117,39 @@ class RuleEnforcementLogic extends StatelessWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: MacosTextField(
+                child: TextField(
                   controller: durationController,
-                  placeholder: 'Value',
+                  decoration: InputDecoration(
+                    hintText: 'Value',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
               const Gap(16),
               Expanded(
                 flex: 3,
-                child: MacosPopupButton<String>(
-                  value: durationUnit,
-                  items: ['Hours', 'Days', 'Weeks', 'Months']
-                      .map((u) => MacosPopupMenuItem(value: u, child: Text(u)))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) onDurationUnitChanged(val);
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: durationUnit,
+                      isExpanded: true,
+                      icon: const Icon(LucideIcons.chevronDown),
+                      items: ['Hours', 'Days', 'Weeks', 'Months']
+                          .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) onDurationUnitChanged(val);
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -147,12 +160,14 @@ class RuleEnforcementLogic extends StatelessWidget {
   }
 
   Widget buildScheduleSection(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: MacosTheme.of(context).canvasColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +176,7 @@ class RuleEnforcementLogic extends StatelessWidget {
             'Active Days',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const Gap(12),
+          const Gap(16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -169,19 +184,20 @@ class RuleEnforcementLogic extends StatelessWidget {
               for (int i = 1; i <= 7; i++)
                 GestureDetector(
                   onTap: () => onDayToggled(i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: scheduledDays.contains(i) ? MacosColors.systemBlueColor.withValues(alpha: 0.2) : MacosColors.systemGrayColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: scheduledDays.contains(i) ? theme.colorScheme.primary.withValues(alpha: 0.2) : theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: scheduledDays.contains(i) ? MacosColors.systemBlueColor : MacosColors.systemGrayColor.withValues(alpha: 0.2),
+                        color: scheduledDays.contains(i) ? theme.colorScheme.primary : Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Text(
                       ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i - 1],
                       style: TextStyle(
-                        color: scheduledDays.contains(i) ? MacosColors.systemBlueColor : MacosTheme.of(context).typography.body.color,
+                        color: scheduledDays.contains(i) ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
                         fontWeight: scheduledDays.contains(i) ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -189,56 +205,66 @@ class RuleEnforcementLogic extends StatelessWidget {
                 ),
             ],
           ),
-          const Gap(20),
+          const Gap(32),
           const Text(
-            'Active Hours (macOS native time picker to be implemented)',
+            'Active Hours',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const Gap(12),
+          const Gap(16),
           Row(
             children: [
               Expanded(
-                child: PushButton(
-                  controlSize: ControlSize.large,
-                  secondary: true,
-                  onPressed: () {
-                    // Time picker not fully available in macos_ui, usually requires custom widget
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const MacosIcon(LucideIcons.sun, size: 16),
-                      const Gap(8),
-                      Text(startTime == null ? 'Start Time' : '${startTime!.hour}:${startTime!.minute.toString().padLeft(2, '0')}'),
-                    ],
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.surface,
+                    foregroundColor: theme.textTheme.bodyMedium?.color,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                   ),
+                  onPressed: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: startTime ?? const TimeOfDay(hour: 9, minute: 0),
+                    );
+                    if (time != null) {
+                      onStartTimeChanged(time);
+                    }
+                  },
+                  icon: const Icon(LucideIcons.sun, size: 16),
+                  label: Text(startTime == null ? 'Start Time' : '${startTime!.hour}:${startTime!.minute.toString().padLeft(2, '0')}'),
                 ),
               ),
-              const Gap(12),
+              const Gap(16),
               Expanded(
-                child: PushButton(
-                  controlSize: ControlSize.large,
-                  secondary: true,
-                  onPressed: () {},
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const MacosIcon(LucideIcons.moon, size: 16),
-                      const Gap(8),
-                      Text(endTime == null ? 'End Time' : '${endTime!.hour}:${endTime!.minute.toString().padLeft(2, '0')}'),
-                    ],
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.surface,
+                    foregroundColor: theme.textTheme.bodyMedium?.color,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                   ),
+                  onPressed: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: endTime ?? const TimeOfDay(hour: 17, minute: 0),
+                    );
+                    if (time != null) {
+                      onEndTimeChanged(time);
+                    }
+                  },
+                  icon: const Icon(LucideIcons.moon, size: 16),
+                  label: Text(endTime == null ? 'End Time' : '${endTime!.hour}:${endTime!.minute.toString().padLeft(2, '0')}'),
                 ),
               ),
             ],
           ),
           if (startTime != null || endTime != null) ...[
-            const Gap(12),
+            const Gap(16),
             Align(
               alignment: Alignment.centerRight,
-              child: PushButton(
-                controlSize: ControlSize.small,
-                secondary: true,
+              child: TextButton(
                 onPressed: () {
                   onStartTimeChanged(null);
                   onEndTimeChanged(null);
@@ -252,19 +278,19 @@ class RuleEnforcementLogic extends StatelessWidget {
     );
   }
 
-  Widget buildSectionHeader(IconData icon, String title) {
+  Widget buildSectionHeader(BuildContext context, IconData icon, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          MacosIcon(icon, color: MacosColors.systemBlueColor, size: 20),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           const Gap(8),
           Text(
             title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: MacosColors.systemGrayColor,
+              color: Colors.grey,
             ),
           ),
         ],

@@ -1,5 +1,4 @@
-import 'package:flutter/widgets.dart';
-import 'package:macos_ui/macos_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 
@@ -15,47 +14,57 @@ class RuleAdvancedOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildSectionHeader(LucideIcons.sliders, 'Advanced Options'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Strict Mode (Nuclear Option)', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const Gap(4),
-                  Text('Forces you to type a paragraph to disable this rule later.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
-                ],
+        buildSectionHeader(context, LucideIcons.sliders, 'Advanced Options'),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Strict Mode (Nuclear Option)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                    const Gap(4),
+                    const Text('Forces you to type a paragraph to disable this rule later.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
               ),
-            ),
-            MacosSwitch(
-              value: isStrictMode,
-              activeColor: const MacosColor(0xFFFF3B30),
-              onChanged: onStrictModeChanged,
-            ),
-          ],
+              Switch(
+                value: isStrictMode,
+                activeColor: Colors.redAccent,
+                onChanged: onStrictModeChanged,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget buildSectionHeader(IconData icon, String title) {
+  Widget buildSectionHeader(BuildContext context, IconData icon, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          MacosIcon(icon, color: MacosColors.systemBlueColor, size: 20),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           const Gap(8),
           Text(
             title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: MacosColors.systemGrayColor,
+              color: Colors.grey,
             ),
           ),
         ],

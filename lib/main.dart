@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger.dart';
@@ -55,14 +54,12 @@ class RestructedApp extends ConsumerStatefulWidget {
 class RestructedAppState extends ConsumerState<RestructedApp> {
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeProvider);
-
-    return MacosApp(
+    return MaterialApp(
       title: 'Restructed',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      themeMode: ThemeMode.dark,
       home: const DashboardScreen(),
     );
   }

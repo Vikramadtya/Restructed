@@ -1,9 +1,7 @@
 import 'dart:math';
-import 'package:flutter/material.dart' show CircleAvatar, LinearProgressIndicator, Colors, Wrap, LayoutBuilder;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:gap/gap.dart';
@@ -39,6 +37,7 @@ class AnalyticsScreen extends ConsumerWidget {
     List<BlockAttempt> attempts,
     bool isLoading,
   ) {
+    final theme = Theme.of(context);
     final today = DateTime.now();
     final todayAttempts = attempts
         .where(
@@ -81,7 +80,7 @@ class AnalyticsScreen extends ConsumerWidget {
     
     // Fallback domains for skeleton
     final displayDomains = isLoading && sortedDomains.isEmpty 
-      ? [MapEntry('reddit.com', 45), MapEntry('twitter.com', 20)] 
+      ? [const MapEntry('reddit.com', 45), const MapEntry('twitter.com', 20)] 
       : sortedDomains;
 
     return SingleChildScrollView(
@@ -94,14 +93,14 @@ class AnalyticsScreen extends ConsumerWidget {
             children: [
               Text(
                 'Analytics Dashboard',
-                style: MacosTheme.of(context).typography.largeTitle.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               ).animate().fadeIn().slideX(),
               FocusScoreGauge(
                 score: isLoading ? 85 : focusScore,
               ).animate().fadeIn().scale(),
             ],
           ),
-          const Gap(24),
+          const Gap(32),
 
           // Summary Cards
           LayoutBuilder(
@@ -111,56 +110,56 @@ class AnalyticsScreen extends ConsumerWidget {
                 runSpacing: 16,
                 children: [
                   SizedBox(
-                    width: 250,
+                    width: 260,
                     child: SummaryCard(
                       title: 'Blocked Today',
                       value: todayCount.toString(),
                       icon: LucideIcons.shieldAlert,
-                      color: MacosColors.systemBlueColor,
+                      color: Colors.blueAccent,
                     ),
                   ),
                   SizedBox(
-                    width: 250,
+                    width: 260,
                     child: SummaryCard(
                       title: 'Current Streak',
                       value: '$currentStreak Days',
                       icon: LucideIcons.flame,
                       color: currentStreak > 0
-                          ? MacosColors.systemOrangeColor
-                          : MacosColors.systemGrayColor,
+                          ? Colors.orangeAccent
+                          : Colors.grey,
                     ),
                   ),
                   SizedBox(
-                    width: 250,
+                    width: 260,
                     child: SummaryCard(
                       title: 'Best Streak',
                       value: '$bestStreak Days',
                       icon: LucideIcons.award,
-                      color: MacosColors.systemYellowColor,
+                      color: Colors.amberAccent,
                     ),
                   ),
                   SizedBox(
-                    width: 250,
+                    width: 260,
                     child: SummaryCard(
                       title: 'Total Blocks',
                       value: isLoading ? '120' : totalAttempts.toString(),
                       icon: LucideIcons.ban,
-                      color: MacosColors.systemRedColor,
+                      color: Colors.redAccent,
                     ),
                   ),
                 ],
               );
             },
           ),
-          const Gap(32),
+          const Gap(40),
 
           // Heatmap and Charts Grid
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 900;
               return Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 24,
+                runSpacing: 24,
                 children: [
                   SizedBox(
                     width: isWide
@@ -172,7 +171,7 @@ class AnalyticsScreen extends ConsumerWidget {
                   ),
                   SizedBox(
                     width: isWide
-                        ? (constraints.maxWidth * 0.42) - 16
+                        ? (constraints.maxWidth * 0.42) - 24
                         : constraints.maxWidth,
                     child: TimeOfDayCard(
                       attempts: attempts,
@@ -182,36 +181,37 @@ class AnalyticsScreen extends ConsumerWidget {
               );
             },
           ),
-          const Gap(32),
+          const Gap(40),
 
           Text(
             'Most Distracting Targets',
-            style: MacosTheme.of(context).typography.title1.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ).animate().fadeIn(delay: 300.ms),
-          const Gap(16),
+          const Gap(24),
 
           if (!isLoading && displayDomains.isEmpty)
             const Center(
               child: Padding(
-                padding: EdgeInsets.all(32.0),
+                padding: EdgeInsets.all(40.0),
                 child: Text(
                   'No blocked attempts yet! Great job focusing!',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
               ),
             ).animate().fadeIn(delay: 400.ms)
           else
             Container(
               decoration: BoxDecoration(
-                color: MacosTheme.of(context).canvasColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: min(displayDomains.length, 10),
                 separatorBuilder: (context, index) =>
-                    Container(height: 1, color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                    Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
                 itemBuilder: (context, index) {
                   final e = displayDomains[index];
                   final percentage = totalAttempts > 0
@@ -219,55 +219,57 @@ class AnalyticsScreen extends ConsumerWidget {
                       : (isLoading ? 0.6 : 0.0);
                   return Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                      horizontal: 32,
+                      vertical: 24,
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: MacosColors.systemRedColor.withValues(alpha: 0.1),
-                          child: const MacosIcon(
+                          radius: 24,
+                          backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                          child: const Icon(
                             LucideIcons.globe,
-                            color: MacosColors.systemRedColor,
+                            color: Colors.redAccent,
+                            size: 24,
                           ),
                         ),
-                        const Gap(16),
+                        const Gap(24),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 e.key,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
-                              const Gap(8),
+                              const Gap(12),
                               Row(
                                 children: [
                                   Expanded(
                                     child: LinearProgressIndicator(
                                       value: percentage,
-                                      backgroundColor: MacosColors.systemGrayColor.withValues(alpha: 0.2),
-                                      color: MacosColors.systemRedColor,
-                                      minHeight: 6,
-                                      borderRadius: BorderRadius.circular(3),
+                                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                                      color: Colors.redAccent,
+                                      minHeight: 8,
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                   const Gap(16),
                                   Text(
                                     '${(percentage * 100).toStringAsFixed(1)}%',
-                                    style: MacosTheme.of(context).typography.footnote,
+                                    style: theme.textTheme.bodySmall,
                                   ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        const Gap(16),
+                        const Gap(24),
                         Text(
                           '${e.value} hits',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 18,
                           ),
                         ),
                       ],

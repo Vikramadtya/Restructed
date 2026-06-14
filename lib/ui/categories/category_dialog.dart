@@ -1,8 +1,8 @@
-import 'package:flutter/widgets.dart';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as ep;
 import 'package:logger/logger.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 
@@ -15,10 +15,30 @@ void showCategoryDialog(
   WidgetRef ref, {
   Category? existingCategory,
 }) {
-  showMacosAlertDialog(
+  showGeneralDialog(
     context: context,
-    builder: (context) {
-      return CategoryDialogWrapper(existingCategory: existingCategory);
+    barrierDismissible: true,
+    barrierLabel: 'Category Dialog',
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: CategoryDialogWrapper(existingCategory: existingCategory),
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+          )),
+          child: child,
+        ),
+      );
     },
   );
 }
@@ -100,25 +120,24 @@ class CategoryDialogWrapperState extends ConsumerState<CategoryDialogWrapper> {
   }
 
   Future<void> deleteCategory() async {
-    final confirm = await showMacosAlertDialog<bool>(
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => MacosAlertDialog(
-        appIcon: const MacosIcon(LucideIcons.alertTriangle, color: MacosColors.systemRedColor, size: 64),
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(LucideIcons.alertTriangle, color: Colors.redAccent, size: 64),
         title: const Text('Delete Category?'),
-        message: const Text(
+        content: const Text(
             'This will permanently delete the category and ALL of its associated rules. Are you sure?'),
-        primaryButton: PushButton(
-          controlSize: ControlSize.large,
-          color: MacosColors.systemRedColor,
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Delete'),
-        ),
-        secondaryButton: PushButton(
-          controlSize: ControlSize.large,
-          secondary: true,
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
 
@@ -155,180 +174,234 @@ class CategoryDialogWrapperState extends ConsumerState<CategoryDialogWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return MacosAlertDialog(
-      appIcon: MacosIcon(
-        widget.existingCategory == null ? LucideIcons.folderPlus : LucideIcons.folderEdit,
-        size: 56,
+    final theme = Theme.of(context);
+    
+    return Container(
+      width: 500,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 30,
+            spreadRadius: 5,
+          ),
+        ],
       ),
-      title: Text(
-        widget.existingCategory == null
-            ? 'Add New Category'
-            : 'Edit Category',
-      ),
-      message: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  GestureDetector(
-                    onTap: () => setState(
-                      () => showEmojiPicker = !showEmojiPicker,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      widget.existingCategory == null ? LucideIcons.folderPlus : LucideIcons.folderEdit,
+                      size: 32,
+                      color: theme.colorScheme.primary,
                     ),
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: MacosTheme.of(context).canvasColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: showEmojiPicker
-                              ? MacosColors.systemBlueColor
-                              : MacosColors.systemGrayColor.withValues(alpha: 0.2),
+                    const Gap(16),
+                    Text(
+                      widget.existingCategory == null ? 'Add New Category' : 'Edit Category',
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const Gap(32),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () => setState(
+                            () => showEmojiPicker = !showEmojiPicker,
+                          ),
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: showEmojiPicker
+                                    ? theme.colorScheme.primary
+                                    : Colors.white.withValues(alpha: 0.1),
+                                width: showEmojiPicker ? 2.0 : 1.0,
+                              ),
+                            ),
+                            child: Center(
+                              child:
+                                  selectedEmoji != null &&
+                                      selectedEmoji!.isNotEmpty
+                                  ? Text(
+                                      selectedEmoji!,
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      LucideIcons.smilePlus,
+                                      size: 28,
+                                      color: Colors.grey,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        const Gap(8),
+                        const Text(
+                          'Icon',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Gap(24),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: nameController,
+                            autofocus: widget.existingCategory == null,
+                            decoration: const InputDecoration(
+                              labelText: 'Category Name',
+                              hintText: 'e.g. Social Media',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const Gap(16),
+                          TextField(
+                            controller: descController,
+                            maxLines: 2,
+                            decoration: const InputDecoration(
+                              labelText: 'Description (Optional)',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+      
+                if (showEmojiPicker) ...[
+                  const Gap(16),
+                  SizedBox(
+                    height: 250,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ep.EmojiPicker(
+                        onEmojiSelected:
+                            (ep.Category? category, ep.Emoji emoji) {
+                              setState(() {
+                                selectedEmoji = emoji.emoji;
+                                showEmojiPicker = false;
+                              });
+                            },
+                        config: ep.Config(
+                          checkPlatformCompatibility: true,
+                          emojiViewConfig: ep.EmojiViewConfig(
+                            backgroundColor: theme.colorScheme.surface,
+                          ),
+                          categoryViewConfig: ep.CategoryViewConfig(
+                            backgroundColor: theme.colorScheme.surface,
+                          ),
+                          bottomActionBarConfig: const ep.BottomActionBarConfig(
+                            enabled: false,
+                          ),
+                          searchViewConfig: ep.SearchViewConfig(
+                            backgroundColor: theme.colorScheme.surface,
+                          )
                         ),
                       ),
-                      child: Center(
-                        child:
-                            selectedEmoji != null &&
-                                selectedEmoji!.isNotEmpty
-                            ? Text(
-                                selectedEmoji!,
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                ),
-                              )
-                            : const MacosIcon(
-                                LucideIcons.smilePlus,
-                                size: 28,
-                                color: MacosColors.systemGrayColor,
-                              ),
-                      ),
-                    ),
-                  ),
-                  const Gap(8),
-                  const Text(
-                    'Icon',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: MacosColors.systemGrayColor,
                     ),
                   ),
                 ],
-              ),
-              const Gap(24),
-              Expanded(
-                child: Column(
-                  children: [
-                    MacosTextField(
-                      controller: nameController,
-                      placeholder: 'Category Name (e.g. Social Media)',
-                      autofocus: widget.existingCategory == null,
-                    ),
-                    const Gap(16),
-                    MacosTextField(
-                      controller: descController,
-                      placeholder: 'Description (Optional)',
-                      maxLines: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          if (showEmojiPicker) ...[
-            const Gap(16),
-            SizedBox(
-              height: 250,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: ep.EmojiPicker(
-                  onEmojiSelected:
-                      (ep.Category? category, ep.Emoji emoji) {
-                        setState(() {
-                          selectedEmoji = emoji.emoji;
-                          showEmojiPicker = false;
-                        });
-                      },
-                  config: const ep.Config(
-                    checkPlatformCompatibility: true,
-                    viewOrderConfig: ep.ViewOrderConfig(
-                      top: ep.EmojiPickerItem.searchBar,
-                      middle: ep.EmojiPickerItem.emojiView,
-                      bottom: ep.EmojiPickerItem.categoryBar,
-                    ),
-                    bottomActionBarConfig: ep.BottomActionBarConfig(
-                      enabled: false,
-                    ),
+      
+                const Gap(24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Enable Category',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const Gap(4),
+                            const Text(
+                              'Turning this off instantly bypasses all rules inside.',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: isActive,
+                        activeColor: theme.colorScheme.primary,
+                        onChanged: (val) => setState(() => isActive = val),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-          ],
-
-          const Gap(24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Enable Category',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                
+                if (widget.existingCategory != null &&
+                    !widget.existingCategory!.isDefault) ...[
+                  const Gap(16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: isLoading ? null : deleteCategory,
+                      icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+                      label: const Text('Delete Category', style: TextStyle(color: Colors.redAccent)),
                     ),
-                    const Gap(4),
-                    const Text(
-                      'Turning this off instantly bypasses all rules inside.',
-                      style: TextStyle(fontSize: 12, color: MacosColors.systemGrayColor),
+                  )
+                ],
+                const Gap(32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const Gap(16),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : saveCategory,
+                      child: isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(
+                              widget.existingCategory == null
+                                  ? 'Create Category'
+                                  : 'Update Category',
+                            ),
                     ),
                   ],
-                ),
-              ),
-              MacosSwitch(
-                value: isActive,
-                onChanged: (val) => setState(() => isActive = val),
-              ),
-            ],
+                )
+              ],
+            ),
           ),
-          
-          if (widget.existingCategory != null &&
-              !widget.existingCategory!.isDefault) ...[
-            const Gap(16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: PushButton(
-                controlSize: ControlSize.regular,
-                secondary: true,
-                onPressed: isLoading ? null : deleteCategory,
-                child: const Text('Delete Category', style: TextStyle(color: MacosColors.systemRedColor)),
-              ),
-            )
-          ]
-        ],
-      ),
-      primaryButton: PushButton(
-        controlSize: ControlSize.large,
-        onPressed: isLoading ? null : saveCategory,
-        child: isLoading
-            ? const ProgressCircle()
-            : Text(
-                widget.existingCategory == null
-                    ? 'Create Category'
-                    : 'Update Category',
-              ),
-      ),
-      secondaryButton: PushButton(
-        controlSize: ControlSize.large,
-        secondary: true,
-        onPressed: isLoading
-            ? null
-            : () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
+        ),
       ),
     );
   }

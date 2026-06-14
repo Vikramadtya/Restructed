@@ -1,6 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 
@@ -30,11 +29,12 @@ class RuleBasicInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesProvider);
+    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildSectionHeader(LucideIcons.info, 'Basic Information'),
+        buildSectionHeader(context, LucideIcons.info, 'Basic Information'),
         categoriesAsync.when(
           data: (categories) {
             if (categories.isEmpty) {
@@ -42,31 +42,43 @@ class RuleBasicInfo extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   'No categories available. Please create a category first.',
-                  style: TextStyle(color: MacosColors.systemRedColor),
+                  style: TextStyle(color: Colors.redAccent),
                 ),
               );
             }
 
-            return MacosPopupButton<String>(
-              value: categoryId,
-              hint: const Text('Select a category'),
-              items: categories
-                  .map(
-                    (c) => MacosPopupMenuItem<String>(value: c.id, child: Text(c.name)),
-                  )
-                  .toList(),
-              onChanged: onCategoryChanged,
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: categoryId,
+                  hint: const Text('Select a category'),
+                  isExpanded: true,
+                  icon: const Icon(LucideIcons.chevronDown),
+                  items: categories
+                      .map(
+                        (c) => DropdownMenuItem<String>(value: c.id, child: Text(c.name)),
+                      )
+                      .toList(),
+                  onChanged: onCategoryChanged,
+                ),
+              ),
             );
           },
-          loading: () => const ProgressCircle(),
+          loading: () => const CircularProgressIndicator(),
           error: (e, s) => Text('Error loading categories: $e'),
         ),
         const Gap(24),
         Container(
           decoration: BoxDecoration(
-            color: MacosTheme.of(context).canvasColor,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -80,34 +92,28 @@ class RuleBasicInfo extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: PushButton(
-                      controlSize: ControlSize.large,
-                      secondary: isAppRule,
-                      onPressed: () => onAppRuleChanged(false),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          MacosIcon(LucideIcons.globe, size: 16),
-                          Gap(8),
-                          Text('Website Domain'),
-                        ],
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: !isAppRule ? theme.colorScheme.primary : theme.colorScheme.surface,
+                        foregroundColor: !isAppRule ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+                        elevation: !isAppRule ? 4 : 0,
                       ),
+                      onPressed: () => onAppRuleChanged(false),
+                      icon: const Icon(LucideIcons.globe, size: 16),
+                      label: const Text('Website Domain'),
                     ),
                   ),
                   const Gap(8),
                   Expanded(
-                    child: PushButton(
-                      controlSize: ControlSize.large,
-                      secondary: !isAppRule,
-                      onPressed: () => onAppRuleChanged(true),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          MacosIcon(LucideIcons.monitor, size: 16),
-                          Gap(8),
-                          Text('macOS Application'),
-                        ],
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isAppRule ? theme.colorScheme.primary : theme.colorScheme.surface,
+                        foregroundColor: isAppRule ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+                        elevation: isAppRule ? 4 : 0,
                       ),
+                      onPressed: () => onAppRuleChanged(true),
+                      icon: const Icon(LucideIcons.monitor, size: 16),
+                      label: const Text('macOS Application'),
                     ),
                   ),
                 ],
@@ -116,61 +122,57 @@ class RuleBasicInfo extends ConsumerWidget {
           ),
         ),
         const Gap(16),
-        Row(
-          children: [
-            Expanded(
-              child: MacosTextField(
-                controller: domainController,
-                focusNode: domainFocusNode,
-                placeholder: isAppRule
-                    ? 'App Name (e.g. Discord)'
-                    : 'Website URL or Domain',
-                prefix: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: MacosIcon(isAppRule ? LucideIcons.monitor : LucideIcons.globe, size: 16, color: MacosColors.systemGrayColor),
-                ),
-                suffix: isAppRule
-                    ? MacosIconButton(
-                        icon: const MacosIcon(LucideIcons.search, color: MacosColors.systemBlueColor, size: 16),
-                        onPressed: () async {
-                          final selectedApp = await showMacosAlertDialog<String>(
-                            context: context,
-                            builder: (ctx) => const AppSelectorDialog(),
-                          );
-                          if (selectedApp != null) {
-                            domainController.text = selectedApp;
-                          }
-                        },
-                      )
-                    : MacosIconButton(
-                        icon: const MacosIcon(
-                          LucideIcons.wand2,
-                          color: MacosColors.systemBlueColor,
-                          size: 16,
-                        ),
-                        onPressed: onFormatDomain,
-                      ),
-              ),
+        TextField(
+          controller: domainController,
+          focusNode: domainFocusNode,
+          decoration: InputDecoration(
+            hintText: isAppRule
+                ? 'App Name (e.g. Discord)'
+                : 'Website URL or Domain',
+            prefixIcon: Icon(isAppRule ? LucideIcons.monitor : LucideIcons.globe, size: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            suffixIcon: isAppRule
+                ? IconButton(
+                    icon: Icon(LucideIcons.search, color: theme.colorScheme.primary, size: 20),
+                    onPressed: () async {
+                      final selectedApp = await showDialog<String>(
+                        context: context,
+                        builder: (ctx) => const AppSelectorDialog(),
+                      );
+                      if (selectedApp != null) {
+                        domainController.text = selectedApp;
+                      }
+                    },
+                  )
+                : IconButton(
+                    icon: Icon(
+                      LucideIcons.wand2,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    onPressed: onFormatDomain,
+                  ),
+          ),
         ),
       ],
     );
   }
 
-  Widget buildSectionHeader(IconData icon, String title) {
+  Widget buildSectionHeader(BuildContext context, IconData icon, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          MacosIcon(icon, color: MacosColors.systemBlueColor, size: 20),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           const Gap(8),
           Text(
             title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: MacosColors.systemGrayColor,
+              color: Colors.grey,
             ),
           ),
         ],

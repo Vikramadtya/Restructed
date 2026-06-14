@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:restructed/ui/core/app_providers.dart';
@@ -20,26 +18,25 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool isResetting = false;
 
   Future<void> masterReset() async {
-    final confirmed = await showMacosAlertDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => MacosAlertDialog(
-        appIcon: const MacosIcon(LucideIcons.alertTriangle, size: 64, color: MacosColors.systemRedColor),
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(LucideIcons.alertTriangle, size: 64, color: Colors.redAccent),
         title: const Text('Factory Reset'),
-        message: const Text(
+        content: const Text(
           'This will delete ALL categories, rules, and analytics history. It will also unblock all websites from your system hosts file. The app will close after completion.\n\nAre you absolutely sure?',
         ),
-        primaryButton: PushButton(
-          controlSize: ControlSize.large,
-          color: MacosColors.systemRedColor,
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Wipe Everything'),
-        ),
-        secondaryButton: PushButton(
-          controlSize: ControlSize.large,
-          secondary: true,
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Wipe Everything'),
+          ),
+        ],
       ),
     );
 
@@ -69,47 +66,50 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final themeMode = ref.watch(themeProvider);
     final isDark = themeMode == ThemeMode.dark;
 
-    return MacosScaffold(
-      toolBar: const ToolBar(
-        title: Text('Settings'),
-        titleWidth: 150.0,
-      ),
-      children: [
-        ContentArea(
-          builder: (context, scrollController) {
-            return ListView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(24.0),
-              children: [
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            title: Text('Settings', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            floating: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(24.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: MacosTheme.of(context).canvasColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          MacosIcon(isDark ? LucideIcons.moon : LucideIcons.sun, size: 24),
-                          const Gap(16),
+                          Icon(isDark ? LucideIcons.moon : LucideIcons.sun, size: 28, color: theme.colorScheme.primary),
+                          const Gap(24),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Dark Mode Theme', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              const Text('Dark Mode Theme', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               const Gap(4),
-                              Text(isDark ? 'Neon Night' : 'Frost Light', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                              Text(isDark ? 'Neon Night' : 'Frost Light', style: const TextStyle(color: Colors.grey, fontSize: 14)),
                             ],
                           ),
                         ],
                       ),
-                      MacosSwitch(
+                      Switch(
                         value: isDark,
+                        activeColor: theme.colorScheme.primary,
                         onChanged: (val) {
                           ref.read(themeProvider.notifier).toggleTheme();
                         },
@@ -117,45 +117,46 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                const Gap(32),
+                const Gap(40),
                 const Text(
                   'Advanced Security',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                const Gap(12),
+                const Gap(16),
                 Container(
                   decoration: BoxDecoration(
-                    color: MacosTheme.of(context).canvasColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(24),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Row(
                                 children: [
-                                  const MacosIcon(LucideIcons.shieldAlert, size: 24),
-                                  const Gap(16),
+                                  Icon(LucideIcons.shieldAlert, size: 28, color: theme.colorScheme.primary),
+                                  const Gap(24),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Aggressive iCloud Private Relay Block', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const Text('Aggressive iCloud Private Relay Block', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                         const Gap(4),
-                                        Text('Disables Safari Private Relay to prevent bypasses.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                                        const Text('Disables Safari Private Relay to prevent bypasses.', style: TextStyle(color: Colors.grey, fontSize: 14)),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            MacosSwitch(
+                            Switch(
                               value: ref.watch(settingsServiceProvider).disablePrivateRelay,
+                              activeColor: theme.colorScheme.primary,
                               onChanged: (val) async {
                                 await ref.read(settingsServiceProvider).setDisablePrivateRelay(val);
                                 await ref.read(daemonApiProvider).triggerSync();
@@ -165,85 +166,89 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ],
                         ),
                       ),
-                      Container(height: 1, color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                      Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(24),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Row(
                                 children: [
-                                  const MacosIcon(LucideIcons.activity, size: 24),
-                                  const Gap(16),
+                                  Icon(LucideIcons.activity, size: 28, color: theme.colorScheme.primary),
+                                  const Gap(24),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Analytics Debounce Interval', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const Text('Analytics Debounce Interval', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                         const Gap(4),
-                                        Text('Minimum time between identical block logs.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                                        const Text('Minimum time between identical block logs.', style: TextStyle(color: Colors.grey, fontSize: 14)),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            MacosPopupButton<int>(
-                              value: ref.watch(settingsServiceProvider).analyticsDebounceSeconds,
-                              items: const [
-                                MacosPopupMenuItem(value: 1, child: Text('1 Second')),
-                                MacosPopupMenuItem(value: 5, child: Text('5 Seconds')),
-                                MacosPopupMenuItem(value: 10, child: Text('10 Seconds')),
-                              ],
-                              onChanged: (val) async {
-                                if (val != null) {
-                                  await ref.read(settingsServiceProvider).setAnalyticsDebounceSeconds(val);
-                                  setState(() {});
-                                }
-                              },
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                value: ref.watch(settingsServiceProvider).analyticsDebounceSeconds,
+                                items: const [
+                                  DropdownMenuItem(value: 1, child: Text('1 Second')),
+                                  DropdownMenuItem(value: 5, child: Text('5 Seconds')),
+                                  DropdownMenuItem(value: 10, child: Text('10 Seconds')),
+                                ],
+                                onChanged: (val) async {
+                                  if (val != null) {
+                                    await ref.read(settingsServiceProvider).setAnalyticsDebounceSeconds(val);
+                                    setState(() {});
+                                  }
+                                },
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Container(height: 1, color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+                      Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(24),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Row(
                                 children: [
-                                  const MacosIcon(LucideIcons.save, size: 24),
-                                  const Gap(16),
+                                  Icon(LucideIcons.save, size: 28, color: theme.colorScheme.primary),
+                                  const Gap(24),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Analytics Data Retention', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const Text('Analytics Data Retention', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                         const Gap(4),
-                                        Text('How long to keep history before auto-deleting.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                                        const Text('How long to keep history before auto-deleting.', style: TextStyle(color: Colors.grey, fontSize: 14)),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            MacosPopupButton<int>(
-                              value: ref.watch(settingsServiceProvider).analyticsRetentionDays,
-                              items: const [
-                                MacosPopupMenuItem(value: 7, child: Text('7 Days')),
-                                MacosPopupMenuItem(value: 30, child: Text('30 Days')),
-                                MacosPopupMenuItem(value: 90, child: Text('90 Days')),
-                                MacosPopupMenuItem(value: 365, child: Text('1 Year')),
-                              ],
-                              onChanged: (val) async {
-                                if (val != null) {
-                                  await ref.read(settingsServiceProvider).setAnalyticsRetentionDays(val);
-                                  setState(() {});
-                                }
-                              },
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                value: ref.watch(settingsServiceProvider).analyticsRetentionDays,
+                                items: const [
+                                  DropdownMenuItem(value: 7, child: Text('7 Days')),
+                                  DropdownMenuItem(value: 30, child: Text('30 Days')),
+                                  DropdownMenuItem(value: 90, child: Text('90 Days')),
+                                  DropdownMenuItem(value: 365, child: Text('1 Year')),
+                                ],
+                                onChanged: (val) async {
+                                  if (val != null) {
+                                    await ref.read(settingsServiceProvider).setAnalyticsRetentionDays(val);
+                                    setState(() {});
+                                  }
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -251,23 +256,23 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                const Gap(40),
+                const Gap(48),
                 const Text(
                   'Danger Zone',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: MacosColors.systemRedColor,
-                    fontSize: 16,
+                    color: Colors.redAccent,
+                    fontSize: 18,
                   ),
                 ),
-                const Gap(12),
+                const Gap(16),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: MacosColors.systemRedColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.redAccent.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: MacosColors.systemRedColor.withValues(alpha: 0.3),
+                      color: Colors.redAccent.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -275,44 +280,47 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       Row(
                         children: [
-                          const MacosIcon(
+                          const Icon(
                             LucideIcons.alertTriangle,
-                            color: MacosColors.systemRedColor,
-                            size: 32,
+                            color: Colors.redAccent,
+                            size: 36,
                           ),
-                          const Gap(16),
+                          const Gap(24),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 'Factory Reset',
                                 style: TextStyle(
-                                  color: MacosColors.systemRedColor,
+                                  color: Colors.redAccent,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                 ),
                               ),
                               const Gap(4),
                               Text(
                                 'Wipe all rules, databases, and restore hosts file.',
-                                style: TextStyle(color: MacosColors.systemRedColor.withValues(alpha: 0.8), fontSize: 12),
+                                style: TextStyle(color: Colors.redAccent.withValues(alpha: 0.8), fontSize: 14),
                               ),
                             ],
                           ),
                         ],
                       ),
                       isResetting
-                          ? const ProgressCircle()
-                          : PushButton(
-                              controlSize: ControlSize.large,
-                              color: MacosColors.systemRedColor,
+                          ? const CircularProgressIndicator(color: Colors.redAccent)
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
                               onPressed: masterReset,
                               child: const Text('RESET APP'),
                             ),
                     ],
                   ),
                 ),
-                const Gap(40),
+                const Gap(48),
                 const Opacity(
                   opacity: 0.5,
                   child: Center(
@@ -323,11 +331,12 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
-      ],
+                const Gap(48),
+              ]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
