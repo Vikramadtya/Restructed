@@ -1,64 +1,70 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:macos_ui/macos_ui.dart';
 
-/// A circular progress gauge that displays the user's gamified Focus Score.
 class FocusScoreGauge extends StatelessWidget {
   final int score;
-
   const FocusScoreGauge({super.key, required this.score});
 
   @override
   Widget build(BuildContext context) {
     Color getScoreColor() {
-      if (score >= 80) return Colors.greenAccent;
-      if (score >= 50) return Colors.orangeAccent;
-      return Colors.redAccent;
+      if (score >= 80) return MacosColors.systemGreenColor;
+      if (score >= 50) return MacosColors.systemOrangeColor;
+      return MacosColors.systemRedColor;
+    }
+
+    String getScoreText() {
+      if (score >= 80) return "Laser Focused";
+      if (score >= 50) return "Needs Work";
+      return "Distracted";
     }
 
     return Container(
-      width: 120,
-      height: 120,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: getScoreColor().withValues(alpha: 0.2),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
+        color: getScoreColor().withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: getScoreColor().withValues(alpha: 0.3)),
       ),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: CircularProgressIndicator(
-              value: score / 100.0,
-              strokeWidth: 8,
-              backgroundColor: Colors.grey.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(getScoreColor()),
-              strokeCap: StrokeCap.round,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: getScoreColor(),
+              shape: BoxShape.circle,
             ),
-          ),
+            child: Text(
+              score.toString(),
+              style: const TextStyle(
+                color: MacosColors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
+          const SizedBox(width: 12),
           Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                score.toString(),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                'Focus Score',
+                style: MacosTheme.of(context).typography.caption1.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: getScoreColor(),
+                ),
+              ),
+              Text(
+                getScoreText(),
+                style: MacosTheme.of(context).typography.headline.copyWith(
                   fontWeight: FontWeight.bold,
                   color: getScoreColor(),
                 ),
               ),
-              const Text(
-                'Focus Score',
-                style: TextStyle(fontSize: 10, color: Colors.grey),
-              ),
             ],
-          ),
+          ).animate().fadeIn(delay: 600.ms),
         ],
       ),
     );

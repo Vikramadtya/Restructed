@@ -1,5 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:gap/gap.dart';
+
 import 'package:restructed/backend/rules/block_rule.dart';
 import 'package:restructed/ui/core/app_providers.dart';
 
@@ -15,11 +20,9 @@ void showRuleDialog(
   BlockRule? existingRule,
   String? initialCategoryId,
 }) {
-  showGeneralDialog(
+  showMacosSheet(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: 'Dismiss',
-    pageBuilder: (context, animation, secondaryAnimation) {
+    builder: (context) {
       return RuleDialogWrapper(
         existingRule: existingRule,
         initialCategoryId: initialCategoryId,
@@ -157,7 +160,29 @@ class RuleDialogWrapperState extends ConsumerState<RuleDialogWrapper> {
   Future<void> saveRule() async {
     if (!isAppRule) formatDomain();
 
-    if (!formKey.currentState!.validate()) return;
+    if (categoryId == null) {
+      showError('Please select a category.');
+      return;
+    }
+    if (domainController.text.trim().isEmpty) {
+      showError('Target cannot be empty.');
+      return;
+    }
+    if (!isAppRule && domainController.text.contains('://') && domainController.text.endsWith(' ')) {
+      showError('Please extract the domain.');
+      return;
+    }
+    if (ruleMode == RuleMode.duration && !isIndefinite) {
+      if (durationController.text.trim().isEmpty) {
+        showError('Duration value is required.');
+        return;
+      }
+      if (double.tryParse(durationController.text) == null) {
+        showError('Invalid duration number.');
+        return;
+      }
+    }
+
     if (ruleMode == RuleMode.schedule && scheduledDays.isEmpty) {
       showError('Please select at least one active day for the schedule.');
       return;
@@ -249,160 +274,127 @@ class RuleDialogWrapperState extends ConsumerState<RuleDialogWrapper> {
 
   void showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
+    showMacosAlertDialog(
+      context: context,
+      builder: (ctx) => MacosAlertDialog(
+        appIcon: const MacosIcon(LucideIcons.alertCircle, color: MacosColors.systemRedColor, size: 64),
+        title: const Text('Error'),
+        message: Text(message),
+        primaryButton: PushButton(
+          controlSize: ControlSize.large,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('OK'),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: Container(
-          width: 600,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 20,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: Material(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(24),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
+    return MacosSheet(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.existingRule == null
-                            ? 'Add New Rule'
-                            : 'Edit Rule',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
+                Text(
+                  widget.existingRule == null ? 'Add New Rule' : 'Edit Rule',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Divider(height: 1),
-                Expanded(
-                  child: Form(
-                    key: formKey,
-                    child: ListView(
-                      padding: const EdgeInsets.all(24.0),
-                      children: [
-                        RuleBasicInfo(
-                          categoryId: categoryId,
-                          onCategoryChanged: (val) =>
-                              setState(() => categoryId = val),
-                          isAppRule: isAppRule,
-                          onAppRuleChanged: (val) =>
-                              setState(() => isAppRule = val),
-                          domainController: domainController,
-                          domainFocusNode: domainFocusNode,
-                          onFormatDomain: formatDomain,
-                        ),
-                        const SizedBox(height: 32),
-                        RuleEnforcementLogic(
-                          ruleMode: ruleMode,
-                          onRuleModeChanged: (val) =>
-                              setState(() => ruleMode = val),
-                          isIndefinite: isIndefinite,
-                          onIndefiniteChanged: (val) =>
-                              setState(() => isIndefinite = val),
-                          durationController: durationController,
-                          durationUnit: durationUnit,
-                          onDurationUnitChanged: (val) =>
-                              setState(() => durationUnit = val),
-                          scheduledDays: scheduledDays,
-                          onDayToggled: (i) => setState(() {
-                            if (scheduledDays.contains(i)) {
-                              scheduledDays.remove(i);
-                            } else {
-                              scheduledDays.add(i);
-                            }
-                          }),
-                          startTime: startTime,
-                          onStartTimeChanged: (val) =>
-                              setState(() => startTime = val),
-                          endTime: endTime,
-                          onEndTimeChanged: (val) =>
-                              setState(() => endTime = val),
-                        ),
-                        const SizedBox(height: 32),
-                        RuleAdvancedOptions(
-                          isStrictMode: isStrictMode,
-                          onStrictModeChanged: (val) =>
-                              setState(() => isStrictMode = val),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 16),
-                      FilledButton(
-                        onPressed: isLoading ? null : saveRule,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          backgroundColor: const Color(0xFF6366F1),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                widget.existingRule == null
-                                    ? 'Create Rule'
-                                    : 'Update Rule',
-                              ),
-                      ),
-                    ],
-                  ),
+                MacosIconButton(
+                  icon: const MacosIcon(LucideIcons.x),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-          ),
+            const Gap(16),
+            Container(height: 1, color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+            Expanded(
+              child: Form(
+                key: formKey,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  children: [
+                    RuleBasicInfo(
+                      categoryId: categoryId,
+                      onCategoryChanged: (val) =>
+                          setState(() => categoryId = val),
+                      isAppRule: isAppRule,
+                      onAppRuleChanged: (val) =>
+                          setState(() => isAppRule = val),
+                      domainController: domainController,
+                      domainFocusNode: domainFocusNode,
+                      onFormatDomain: formatDomain,
+                    ),
+                    const Gap(32),
+                    RuleEnforcementLogic(
+                      ruleMode: ruleMode,
+                      onRuleModeChanged: (val) =>
+                          setState(() => ruleMode = val),
+                      isIndefinite: isIndefinite,
+                      onIndefiniteChanged: (val) =>
+                          setState(() => isIndefinite = val),
+                      durationController: durationController,
+                      durationUnit: durationUnit,
+                      onDurationUnitChanged: (val) =>
+                          setState(() => durationUnit = val),
+                      scheduledDays: scheduledDays,
+                      onDayToggled: (i) => setState(() {
+                        if (scheduledDays.contains(i)) {
+                          scheduledDays.remove(i);
+                        } else {
+                          scheduledDays.add(i);
+                        }
+                      }),
+                      startTime: startTime,
+                      onStartTimeChanged: (val) =>
+                          setState(() => startTime = val),
+                      endTime: endTime,
+                      onEndTimeChanged: (val) =>
+                          setState(() => endTime = val),
+                    ),
+                    const Gap(32),
+                    RuleAdvancedOptions(
+                      isStrictMode: isStrictMode,
+                      onStrictModeChanged: (val) =>
+                          setState(() => isStrictMode = val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(height: 1, color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+            const Gap(16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                PushButton(
+                  controlSize: ControlSize.large,
+                  secondary: true,
+                  onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const Gap(16),
+                PushButton(
+                  controlSize: ControlSize.large,
+                  color: MacosColors.systemBlueColor,
+                  onPressed: isLoading ? null : saveRule,
+                  child: isLoading
+                      ? const ProgressCircle()
+                      : Text(
+                          widget.existingRule == null
+                              ? 'Create Rule'
+                              : 'Update Rule',
+                        ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

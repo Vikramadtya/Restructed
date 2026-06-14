@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:gap/gap.dart';
 
-/// A reusable card widget that displays a key metric (e.g. Total Blocks, Streak).
 class SummaryCard extends StatelessWidget {
   final String title;
   final String value;
@@ -18,9 +19,12 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: MacosTheme.of(context).canvasColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Row(
@@ -31,25 +35,23 @@ class SummaryCard extends StatelessWidget {
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: color, size: 32),
+              child: MacosIcon(icon, color: color, size: 32),
             ),
-            const SizedBox(width: 20),
+            const Gap(20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                    style: MacosTheme.of(context).typography.headline.copyWith(color: MacosColors.systemGrayColor),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const Gap(4),
                   Text(
                     value,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style: MacosTheme.of(context).typography.largeTitle.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 1,

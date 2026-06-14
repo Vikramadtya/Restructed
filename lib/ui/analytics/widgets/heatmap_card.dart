@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:gap/gap.dart';
 import 'package:restructed/backend/analytics/block_attempt.dart';
 
-/// A widget that displays a GitHub-style heatmap of blocked distraction attempts over the last 30 days.
 class HeatmapCard extends StatelessWidget {
   final List<BlockAttempt> attempts;
 
@@ -58,9 +59,12 @@ class HeatmapCard extends StatelessWidget {
       }
     }
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: MacosTheme.of(context).canvasColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -68,11 +72,9 @@ class HeatmapCard extends StatelessWidget {
           children: [
             Text(
               'Distraction Intensity (Last 30 Days)',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: MacosTheme.of(context).typography.title2.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 24),
+            const Gap(24),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,11 +85,11 @@ class HeatmapCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       dayLabel('Mon'),
-                      const SizedBox(height: 12),
+                      const Gap(12),
                       dayLabel('Wed'),
-                      const SizedBox(height: 12),
+                      const Gap(12),
                       dayLabel('Fri'),
-                      const SizedBox(height: 12),
+                      const Gap(12),
                     ],
                   ),
                 ),
@@ -103,10 +105,7 @@ class HeatmapCard extends StatelessWidget {
                               if (index < week.length) {
                                 final entry = week[index];
                                 if (entry.value == -1) {
-                                  return const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                  ); // Padding
+                                  return const Gap(14, crossAxisExtent: 14); // Padding
                                 }
 
                                 final count = entry.value;
@@ -116,19 +115,19 @@ class HeatmapCard extends StatelessWidget {
                                 Color boxColor;
                                 if (count == 0) {
                                   boxColor =
-                                      Theme.of(context).brightness ==
+                                      MacosTheme.brightnessOf(context) ==
                                           Brightness.dark
-                                      ? Colors.white10
-                                      : Colors.black12;
+                                      ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
+                                      : const Color(0xFF000000).withValues(alpha: 0.1);
                                 } else {
                                   boxColor = Color.lerp(
-                                    Colors.redAccent.withValues(alpha: 0.3),
-                                    Colors.redAccent,
+                                    MacosColors.systemRedColor.withValues(alpha: 0.3),
+                                    MacosColors.systemRedColor,
                                     intensity,
                                   )!;
                                 }
 
-                                return Tooltip(
+                                return MacosTooltip(
                                   message:
                                       "${DateFormat('MMM d').format(entry.key)}: $count blocks",
                                   child: Container(
@@ -152,27 +151,27 @@ class HeatmapCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const Gap(16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const Text(
                   'Focused',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: MacosColors.systemGrayColor),
                 ),
-                const SizedBox(width: 8),
+                const Gap(8),
                 legendBox(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white10
-                      : Colors.black12,
+                  MacosTheme.brightnessOf(context) == Brightness.dark
+                      ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
+                      : const Color(0xFF000000).withValues(alpha: 0.1),
                 ),
-                legendBox(Colors.redAccent.withValues(alpha: 0.3)),
-                legendBox(Colors.redAccent.withValues(alpha: 0.6)),
-                legendBox(Colors.redAccent),
-                const SizedBox(width: 8),
+                legendBox(MacosColors.systemRedColor.withValues(alpha: 0.3)),
+                legendBox(MacosColors.systemRedColor.withValues(alpha: 0.6)),
+                legendBox(MacosColors.systemRedColor),
+                const Gap(8),
                 const Text(
                   'Distracted',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: MacosColors.systemGrayColor),
                 ),
               ],
             ),
@@ -183,7 +182,7 @@ class HeatmapCard extends StatelessWidget {
   }
 
   Widget dayLabel(String text) =>
-      Text(text, style: const TextStyle(fontSize: 10, color: Colors.grey));
+      Text(text, style: const TextStyle(fontSize: 10, color: MacosColors.systemGrayColor));
 
   Widget legendBox(Color color) => Container(
     width: 12,

@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -44,46 +46,58 @@ class DashboardScreen extends ConsumerWidget {
     final init = ref.watch(appInitializationProvider);
     
     if (init.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Starting Daemon & Syncing OS...', style: TextStyle(color: Colors.grey)),
-            ],
-          ),
+      return MacosWindow(
+        child: MacosScaffold(
+          children: [
+            ContentArea(
+              builder: (context, controller) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    ProgressCircle(),
+                    SizedBox(height: 16),
+                    Text('Starting Daemon & Syncing OS...', style: TextStyle(color: MacosColors.systemGrayColor)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
     
     if (init.hasError) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.redAccent, size: 64),
-                const SizedBox(height: 16),
-                const Text('Failed to Start Security Daemon', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                Text(
-                  init.error.toString().replaceAll('Exception: ', ''),
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 16),
-                  textAlign: TextAlign.center,
+      return MacosWindow(
+        child: MacosScaffold(
+          children: [
+            ContentArea(
+              builder: (context, controller) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const MacosIcon(LucideIcons.alertCircle, color: MacosColors.systemRedColor, size: 64),
+                      const SizedBox(height: 16),
+                      const Text('Failed to Start Security Daemon', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Text(
+                        init.error.toString().replaceAll('Exception: ', ''),
+                        style: const TextStyle(color: MacosColors.systemRedColor, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      PushButton(
+                        controlSize: ControlSize.large,
+                        onPressed: () => ref.invalidate(appInitializationProvider),
+                        child: const Text('Retry Connection'),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 32),
-                FilledButton.icon(
-                  onPressed: () => ref.invalidate(appInitializationProvider),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry Connection'),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       );
     }
@@ -118,47 +132,50 @@ class DashboardScreen extends ConsumerWidget {
         mainContent = const Center(child: Text('Coming Soon'));
     }
 
-    return Scaffold(
-      body: Row(
-        children: [
-          // Navigation Rail (Material Sidebar)
-          NavigationRail(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (int index) {
+    return MacosWindow(
+      sidebar: Sidebar(
+        minWidth: 200,
+        builder: (context, scrollController) {
+          return SidebarItems(
+            currentIndex: selectedIndex,
+            onChanged: (int index) {
               ref.read(sidebarIndexProvider.notifier).setIndex(index);
               ref.read(selectedCategoryIdProvider.notifier).setCategory(null);
             },
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.shield_outlined),
-                selectedIcon: Icon(Icons.shield),
+            items: const [
+              SidebarItem(
+                leading: MacosIcon(LucideIcons.shield),
                 label: Text('Rules'),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.category_outlined),
-                selectedIcon: Icon(Icons.category),
+              SidebarItem(
+                leading: MacosIcon(LucideIcons.folder),
                 label: Text('Categories'),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.analytics_outlined),
-                selectedIcon: Icon(Icons.analytics),
+              SidebarItem(
+                leading: MacosIcon(LucideIcons.barChart2),
                 label: Text('Analytics'),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
+              SidebarItem(
+                leading: MacosIcon(LucideIcons.settings),
                 label: Text('Settings'),
               ),
             ],
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          // Main Content Area
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: mainContent,
-            ),
+          );
+        },
+      ),
+      child: MacosScaffold(
+        toolBar: const ToolBar(
+          title: Text('Restructed'),
+          titleWidth: 150.0,
+        ),
+        children: [
+          ContentArea(
+            builder: (context, scrollController) {
+              return Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: mainContent,
+              );
+            },
           ),
         ],
       ),
@@ -174,148 +191,107 @@ class RulesView extends ConsumerWidget {
     final rulesAsyncValue = ref.watch(rulesProvider);
     final searchQuery = ref.watch(searchQueryProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton:
-          FloatingActionButton.extended(
-            onPressed: () => showRuleDialog(context, ref),
-            label: const Text(
-              'Add Rule',
-              style: TextStyle(
-                color: Colors.white,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Active Rules',
+              style: MacosTheme.of(context).typography.largeTitle.copyWith(
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            icon: const Icon(Icons.add, color: Colors.white),
-            backgroundColor: Theme.of(context).primaryColor,
-          ).animate().scale(
-            delay: 200.ms,
-            duration: 400.ms,
-            curve: Curves.easeOutBack,
-          ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Active Rules',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ).animate().fadeIn().slideX(),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: () async {
-                  // Deep Focus: Activate all rules and categories
-                  final rules = await ref
-                      .read(ruleRepositoryProvider)
-                      .getAllRules();
-                  final categories = await ref
-                      .read(categoryRepositoryProvider)
-                      .getAllCategories();
+            ).animate().fadeIn().slideX(),
+            const Spacer(),
+            PushButton(
+              controlSize: ControlSize.large,
+              onPressed: () async {
+                // Deep Focus: Activate all rules and categories
+                final rules = await ref
+                    .read(ruleRepositoryProvider)
+                    .getAllRules();
+                final categories = await ref
+                    .read(categoryRepositoryProvider)
+                    .getAllCategories();
 
-                  final daemonApi = ref.read(daemonApiProvider);
-                  
-                  for (final cat in categories) {
-                    if (!cat.isActive) {
-                      final updatedCat = cat.copyWith(isActive: true, syncStatus: 'staged');
-                      await ref
-                          .read(categoryRepositoryProvider)
-                          .updateCategory(updatedCat);
-                      await daemonApi.triggerSync();
-                    }
+                final daemonApi = ref.read(daemonApiProvider);
+                
+                for (final cat in categories) {
+                  if (!cat.isActive) {
+                    final updatedCat = cat.copyWith(isActive: true, syncStatus: 'staged');
+                    await ref
+                        .read(categoryRepositoryProvider)
+                        .updateCategory(updatedCat);
+                    await daemonApi.triggerSync();
                   }
-                  for (final rule in rules) {
-                    if (!rule.isActive) {
-                      final updatedRule = rule.copyWith(
-                            isActive: true,
-                            lastActivatedAt: DateTime.now(),
-                            syncStatus: 'staged',
-                          );
-                      await ref
-                          .read(ruleRepositoryProvider)
-                          .updateRule(updatedRule);
-                      await daemonApi.triggerSync();
-                    }
-                  }
-
-                  ref.invalidate(rulesProvider);
-                  ref.invalidate(categoriesProvider);
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Deep Focus Activated! All rules and categories enabled.',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.flash_on, color: Colors.white),
-                label: const Text(
-                  'DEEP FOCUS',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                ),
-              ).animate().fadeIn(delay: 100.ms).scale(),
-            ],
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            onChanged: (val) =>
-                ref.read(searchQueryProvider.notifier).setQuery(val),
-            decoration: InputDecoration(
-              hintText: 'Search rules by domain...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.05),
-            ),
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
-          const SizedBox(height: 20),
-          Expanded(
-            child: rulesAsyncValue.when(
-              data: (rules) {
-                final filteredRules = rules
-                    .where(
-                      (r) => r.domain.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ),
-                    )
-                    .toList();
-
-                if (filteredRules.isEmpty) {
-                  return Center(
-                    child: const Text(
-                      'No rules found.',
-                    ).animate().fadeIn().scale(),
-                  );
                 }
-                return ListView.builder(
-                  itemCount: filteredRules.length,
-                  itemBuilder: (context, index) =>
-                      RuleListTile(rule: filteredRules[index]),
-                );
+                for (final rule in rules) {
+                  if (!rule.isActive) {
+                    final updatedRule = rule.copyWith(
+                          isActive: true,
+                          lastActivatedAt: DateTime.now(),
+                          syncStatus: 'staged',
+                        );
+                    await ref
+                        .read(ruleRepositoryProvider)
+                        .updateRule(updatedRule);
+                    await daemonApi.triggerSync();
+                  }
+                }
+
+                ref.invalidate(rulesProvider);
+                ref.invalidate(categoriesProvider);
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
+              child: const Text('DEEP FOCUS'),
+            ).animate().fadeIn(delay: 100.ms).scale(),
+            const SizedBox(width: 12),
+            PushButton(
+              controlSize: ControlSize.large,
+              onPressed: () => showRuleDialog(context, ref),
+              child: const Text('Add Rule'),
+            ).animate().fadeIn(delay: 200.ms).scale(),
+          ],
+        ),
+        const SizedBox(height: 20),
+        MacosTextField(
+          placeholder: 'Search rules by domain...',
+          onChanged: (val) =>
+              ref.read(searchQueryProvider.notifier).setQuery(val),
+          prefix: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: MacosIcon(LucideIcons.search, size: 16),
           ),
-        ],
-      ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
+        const SizedBox(height: 20),
+        Expanded(
+          child: rulesAsyncValue.when(
+            data: (rules) {
+              final filteredRules = rules
+                  .where(
+                    (r) => r.domain.toLowerCase().contains(
+                      searchQuery.toLowerCase(),
+                    ),
+                  )
+                  .toList();
+
+              if (filteredRules.isEmpty) {
+                return Center(
+                  child: const Text(
+                    'No rules found.',
+                  ).animate().fadeIn().scale(),
+                );
+              }
+              return ListView.builder(
+                itemCount: filteredRules.length,
+                itemBuilder: (context, index) =>
+                    RuleListTile(rule: filteredRules[index]),
+              );
+            },
+            loading: () => const Center(child: ProgressCircle()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -340,94 +316,73 @@ class CategoryRulesScreen extends ConsumerWidget {
       orElse: () => 'Rules',
     );
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton:
-          FloatingActionButton.extended(
-            onPressed: () =>
-                showRuleDialog(context, ref, initialCategoryId: categoryId),
-            label: const Text(
-              'Add Rule',
-              style: TextStyle(
-                color: Colors.white,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            MacosIconButton(
+              icon: const MacosIcon(LucideIcons.arrowLeft),
+              onPressed: () => ref
+                  .read(selectedCategoryIdProvider.notifier)
+                  .setCategory(null),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              categoryName,
+              style: MacosTheme.of(context).typography.largeTitle.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            icon: const Icon(Icons.add, color: Colors.white),
-            backgroundColor: Theme.of(context).primaryColor,
-          ).animate().scale(
-            delay: 200.ms,
-            duration: 400.ms,
-            curve: Curves.easeOutBack,
+            const Spacer(),
+            PushButton(
+              controlSize: ControlSize.large,
+              onPressed: () =>
+                  showRuleDialog(context, ref, initialCategoryId: categoryId),
+              child: const Text('Add Rule'),
+            ).animate().fadeIn(delay: 200.ms).scale(),
+          ],
+        ).animate().fadeIn().slideX(),
+        const SizedBox(height: 20),
+        MacosTextField(
+          placeholder: 'Search rules by domain...',
+          onChanged: (val) =>
+              ref.read(searchQueryProvider.notifier).setQuery(val),
+          prefix: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: MacosIcon(LucideIcons.search, size: 16),
           ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => ref
-                    .read(selectedCategoryIdProvider.notifier)
-                    .setCategory(null),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                categoryName,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ).animate().fadeIn().slideX(),
-          const SizedBox(height: 20),
-          TextField(
-            onChanged: (val) =>
-                ref.read(searchQueryProvider.notifier).setQuery(val),
-            decoration: InputDecoration(
-              hintText: 'Search rules by domain...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.05),
-            ),
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
-          const SizedBox(height: 20),
-          Expanded(
-            child: rulesAsyncValue.when(
-              data: (rules) {
-                final filteredRules = rules
-                    .where(
-                      (r) => r.domain.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ),
-                    )
-                    .toList();
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
+        const SizedBox(height: 20),
+        Expanded(
+          child: rulesAsyncValue.when(
+            data: (rules) {
+              final filteredRules = rules
+                  .where(
+                    (r) => r.domain.toLowerCase().contains(
+                      searchQuery.toLowerCase(),
+                    ),
+                  )
+                  .toList();
 
-                if (filteredRules.isEmpty) {
-                  return Center(
-                    child: const Text(
-                      'No rules found.',
-                    ).animate().fadeIn().scale(),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: filteredRules.length,
-                  itemBuilder: (context, index) =>
-                      RuleListTile(rule: filteredRules[index]),
+              if (filteredRules.isEmpty) {
+                return Center(
+                  child: const Text(
+                    'No rules found.',
+                  ).animate().fadeIn().scale(),
                 );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
+              }
+              return ListView.builder(
+                itemCount: filteredRules.length,
+                itemBuilder: (context, index) =>
+                    RuleListTile(rule: filteredRules[index]),
+              );
+            },
+            loading: () => const Center(child: ProgressCircle()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

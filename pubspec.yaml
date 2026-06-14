@@ -56,6 +56,15 @@ dependencies:
   emoji_picker_flutter: ^4.4.0
   flutter_animate: ^4.5.2
   cached_network_image: ^3.4.1
+  macos_ui: ^2.2.2
+  lucide_icons: ^0.257.0
+  skeletonizer: ^2.1.3
+  gap: ^3.0.1
+  dio: ^5.9.2
+  talker_flutter: ^5.1.17
+  talker_riverpod_logger: ^5.1.17
+  sentry_flutter: ^9.22.0
+  talker_dio_logger: ^5.1.17
 
 dev_dependencies:
   flutter_test:

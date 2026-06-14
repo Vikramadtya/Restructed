@@ -1,6 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:gap/gap.dart';
 
 import 'package:restructed/ui/core/app_providers.dart';
 import 'package:restructed/backend/categories/category.dart';
@@ -16,84 +20,95 @@ class CategoriesScreen extends ConsumerWidget {
     final rulesAsyncValue = ref.watch(rulesProvider);
     final searchQuery = ref.watch(searchQueryProvider);
 
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Categories',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Organize your blocking rules with categories.',
-                      style: TextStyle(color: Colors.grey.shade500),
-                    ),
-                  ],
-                ),
-              ),
-              FilledButton.icon(
-                onPressed: () => showCategoryDialog(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Category'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            onChanged: (val) =>
-                ref.read(searchQueryProvider.notifier).setQuery(val),
-            decoration: InputDecoration(
-              hintText: 'Search categories...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.05),
-            ),
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
-          const SizedBox(height: 24),
-          Expanded(
-            child: categoriesAsyncValue.when(
-              data: (categories) {
-                final filteredCategories = categories
-                    .where(
-                      (c) => c.name.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ),
-                    )
-                    .toList();
+    return categoriesAsyncValue.when(
+      data: (categories) => _buildContent(context, ref, categories, rulesAsyncValue, false, searchQuery),
+      loading: () => Skeletonizer(
+        enabled: true,
+        child: _buildContent(
+          context,
+          ref,
+          [
+            const Category(id: '1', name: 'Social Media', isActive: true),
+            const Category(id: '2', name: 'Entertainment', isActive: false),
+            const Category(id: '3', name: 'News', isActive: true),
+            const Category(id: '4', name: 'Gaming', isActive: false),
+          ],
+          rulesAsyncValue,
+          true,
+          '',
+        ),
+      ),
+      error: (err, stack) => Center(child: Text('Error: $err')),
+    );
+  }
 
-                if (filteredCategories.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No categories found.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    List<Category> categories,
+    AsyncValue<List<dynamic>> rulesAsyncValue,
+    bool isLoading,
+    String searchQuery,
+  ) {
+    final filteredCategories = categories
+        .where(
+          (c) => c.name.toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          ),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Categories',
+                    style: MacosTheme.of(context).typography.largeTitle.copyWith(fontWeight: FontWeight.bold),
+                  ).animate().fadeIn().slideX(),
+                  const Gap(8),
+                  Text(
+                    'Organize your blocking rules with categories.',
+                    style: TextStyle(color: MacosColors.systemGrayColor),
+                  ).animate().fadeIn(delay: 100.ms),
+                ],
+              ),
+            ),
+            PushButton(
+              controlSize: ControlSize.large,
+              onPressed: () => showCategoryDialog(context, ref),
+              child: const Text('Add Category'),
+            ).animate().scale(delay: 100.ms),
+          ],
+        ),
+        const Gap(24),
+        MacosTextField(
+          placeholder: 'Search categories...',
+          onChanged: (val) =>
+              ref.read(searchQueryProvider.notifier).setQuery(val),
+          prefix: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: MacosIcon(LucideIcons.search, size: 16),
+          ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2),
+        const Gap(24),
+        Expanded(
+          child: filteredCategories.isEmpty && !isLoading
+              ? Center(
+                  child: Text(
+                    'No categories found.',
+                    style: TextStyle(
+                      color: MacosTheme.of(context).typography.body.color,
                     ),
-                  );
-                }
-                return GridView.builder(
+                  ),
+                )
+              : GridView.builder(
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 300,
                     mainAxisExtent: 280,
@@ -104,23 +119,23 @@ class CategoriesScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final cat = filteredCategories[index];
 
-                    int ruleCount = 0;
-                    rulesAsyncValue.whenData((rules) {
-                      ruleCount = rules
-                          .where((r) => r.categoryId == cat.id)
-                          .length;
-                    });
+                    int ruleCount = isLoading ? 5 : 0;
+                    if (!isLoading) {
+                      rulesAsyncValue.whenData((rules) {
+                        ruleCount = rules
+                            .where((r) => r.categoryId == cat.id)
+                            .length;
+                      });
+                    }
 
-                    return CategoryCard(category: cat, ruleCount: ruleCount);
+                    return CategoryCard(category: cat, ruleCount: ruleCount)
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: 100 + (index * 50)))
+                        .scale(begin: const Offset(0.95, 0.95));
                   },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
-          ),
-        ],
-      ),
+                ),
+        ),
+      ],
     );
   }
 }
@@ -136,43 +151,42 @@ class CategoryCard extends ConsumerWidget {
   });
 
   Color getCategoryColor(String? name) {
-    if (name == null) return Colors.grey;
+    if (name == null) return MacosColors.systemGrayColor;
     final lower = name.toLowerCase();
-    if (lower.contains('social')) return const Color(0xFF8B5CF6); // Purple
+    if (lower.contains('social')) return MacosColors.systemPurpleColor;
     if (lower.contains('entertainment') || lower.contains('video')) {
-      return const Color(0xFFEF4444); // Red
+      return MacosColors.systemRedColor;
     }
-    if (lower.contains('news')) return const Color(0xFF3B82F6); // Blue
-    if (lower.contains('gaming')) return const Color(0xFF10B981); // Green
-    if (lower.contains('shop')) return const Color(0xFFF59E0B); // Yellow
-    return Colors.grey;
+    if (lower.contains('news')) return MacosColors.systemBlueColor;
+    if (lower.contains('gaming')) return MacosColors.systemGreenColor;
+    if (lower.contains('shop')) return MacosColors.systemYellowColor;
+    return MacosColors.systemGrayColor;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = getCategoryColor(category.name);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final theme = MacosTheme.of(context);
+    final isDark = MacosTheme.brightnessOf(context) == Brightness.dark;
 
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         ref.read(selectedCategoryIdProvider.notifier).setCategory(category.id);
       },
-      borderRadius: BorderRadius.circular(24),
       child: Container(
         decoration: BoxDecoration(
-          color: theme.cardColor,
+          color: theme.canvasColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.05),
+                ? const Color(0xFFFFFFFF).withValues(alpha: 0.05)
+                : const Color(0xFF000000).withValues(alpha: 0.05),
           ),
           boxShadow: isDark
               ? null
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: const Color(0xFF000000).withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -184,10 +198,10 @@ class CategoryCard extends ConsumerWidget {
             children: [
               Align(
                 alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    color: Colors.grey,
+                child: MacosIconButton(
+                  icon: const MacosIcon(
+                    LucideIcons.edit2,
+                    color: MacosColors.systemGrayColor,
                     size: 20,
                   ),
                   onPressed: () => showCategoryDialog(
@@ -195,8 +209,6 @@ class CategoryCard extends ConsumerWidget {
                     ref,
                     existingCategory: category,
                   ),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
                 ),
               ),
               const Spacer(),
@@ -213,10 +225,10 @@ class CategoryCard extends ConsumerWidget {
                           category.icon!,
                           style: const TextStyle(fontSize: 28),
                         )
-                      : Icon(Icons.category, color: color, size: 28),
+                      : MacosIcon(LucideIcons.folder, color: color, size: 28),
                 ),
               ),
-              const SizedBox(height: 12),
+              const Gap(12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -224,7 +236,7 @@ class CategoryCard extends ConsumerWidget {
                     child: Text(
                       category.name,
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface,
+                        color: theme.typography.body.color,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -238,25 +250,25 @@ class CategoryCard extends ConsumerWidget {
                       child: SizedBox(
                         width: 12,
                         height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: ProgressCircle(),
                       ),
                     ),
                   if (category.syncStatus == 'failed')
                     const Padding(
                       padding: EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+                      child: MacosIcon(LucideIcons.alertCircle, color: MacosColors.systemRedColor, size: 16),
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const Gap(4),
               Text(
                 '$ruleCount sites',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: const TextStyle(color: MacosColors.systemGrayColor, fontSize: 12),
               ),
               const Spacer(),
-              Switch(
+              MacosSwitch(
                 value: category.isActive,
-                activeTrackColor: const Color(0xFF6366F1),
+                activeColor: const MacosColor(0xFF007AFF),
                 onChanged: (val) async {
                   try {
                     final daemonApi = ref.read(daemonApiProvider);
@@ -268,14 +280,7 @@ class CategoryCard extends ConsumerWidget {
                     ref.invalidate(categoriesProvider);
                     ref.invalidate(rulesByCategoryProvider);
                   } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
+                    // Handled implicitly by daemonApi failure states, or talker.
                   }
                 },
               ),

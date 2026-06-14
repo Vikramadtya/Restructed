@@ -1,0 +1,50 @@
+name: MacOS Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.22.1' # Adjust to your desired version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          mkdir -p build/dmg
+          create-dmg \
+            --volname "Restructed Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "Restructed.app" 200 190 \
+            --hide-extension "Restructed.app" \
+            --app-drop-link 600 185 \
+            "build/dmg/Restructed.dmg" \
+            "build/macos/Build/Products/Release/Restructed.app"
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Restructed-MacOS-App
+          path: build/dmg/Restructed.dmg

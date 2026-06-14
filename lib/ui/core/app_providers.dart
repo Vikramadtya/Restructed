@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'package:talker_flutter/talker_flutter.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
+
+import 'package:restructed/main.dart' show talker;
 import 'package:restructed/backend/core/injection.dart';
 
 import 'package:restructed/backend/categories/category_repository.dart';
@@ -162,4 +167,21 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
 
   final daemonApi = ref.read(daemonApiProvider);
   await daemonApi.triggerSync();
+});
+
+// Telemetry & Networking
+final talkerProvider = Provider<Talker>((ref) {
+  return talker;
+});
+
+final dioProvider = Provider<Dio>((ref) {
+  final dio = Dio();
+  dio.interceptors.add(TalkerDioLogger(
+    talker: ref.read(talkerProvider),
+    settings: const TalkerDioLoggerSettings(
+      printRequestHeaders: true,
+      printResponseHeaders: false,
+    ),
+  ));
+  return dio;
 });

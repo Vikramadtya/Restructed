@@ -1,5 +1,8 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:gap/gap.dart';
 
 class AppSelectorDialog extends StatefulWidget {
   const AppSelectorDialog({super.key});
@@ -74,63 +77,61 @@ class AppSelectorDialogState extends State<AppSelectorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      child: Container(
-        width: 500,
-        height: 600,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Select Application',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+    return MacosAlertDialog(
+      appIcon: const MacosIcon(LucideIcons.monitor, size: 56),
+      title: const Text('Select Application'),
+      message: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MacosTextField(
+            placeholder: 'Search for an app...',
+            prefix: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: MacosIcon(LucideIcons.search, size: 16),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search for an app...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onChanged: filterApps,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : filteredApps.isEmpty
-                  ? const Center(child: Text('No applications found.'))
-                  : ListView.builder(
-                      itemCount: filteredApps.length,
-                      itemBuilder: (context, index) {
-                        final appName = filteredApps[index];
-                        return ListTile(
-                          leading: const Icon(Icons.desktop_mac),
-                          title: Text(appName),
-                          trailing: const Icon(Icons.chevron_right, size: 16),
-                          onTap: () {
-                            Navigator.of(context).pop(appName);
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+            onChanged: filterApps,
+          ),
+          const Gap(16),
+          SizedBox(
+            height: 300,
+            child: isLoading
+                ? const Center(child: ProgressCircle())
+                : filteredApps.isEmpty
+                ? const Center(child: Text('No applications found.'))
+                : ListView.builder(
+                    itemCount: filteredApps.length,
+                    itemBuilder: (context, index) {
+                      final appName = filteredApps[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(appName);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: MacosColors.systemGrayColor.withValues(alpha: 0.2))),
+                          ),
+                          child: Row(
+                            children: [
+                              const MacosIcon(LucideIcons.monitor, size: 16, color: MacosColors.systemGrayColor),
+                              const Gap(12),
+                              Expanded(child: Text(appName)),
+                              const MacosIcon(LucideIcons.chevronRight, size: 16, color: MacosColors.systemGrayColor),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+      primaryButton: PushButton(
+        controlSize: ControlSize.large,
+        secondary: true,
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
       ),
     );
   }

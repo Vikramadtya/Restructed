@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:gap/gap.dart';
 
 class RuleAdvancedOptions extends StatelessWidget {
   final bool isStrictMode;
@@ -15,20 +18,26 @@ class RuleAdvancedOptions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildSectionHeader(Icons.tune, 'Advanced Options'),
-        SwitchListTile(
-          title: const Text('Strict Mode (Nuclear Option)'),
-          subtitle: const Text(
-            'Forces you to type a paragraph to disable this rule later.',
-          ),
-          value: isStrictMode,
-          activeTrackColor: const Color(0xFF6366F1),
-          onChanged: onStrictModeChanged,
-          activeThumbColor: Colors.redAccent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          tileColor: Theme.of(context).colorScheme.surface,
+        buildSectionHeader(LucideIcons.sliders, 'Advanced Options'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Strict Mode (Nuclear Option)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Gap(4),
+                  Text('Forces you to type a paragraph to disable this rule later.', style: TextStyle(color: MacosColors.systemGrayColor, fontSize: 12)),
+                ],
+              ),
+            ),
+            MacosSwitch(
+              value: isStrictMode,
+              activeColor: const MacosColor(0xFFFF3B30),
+              onChanged: onStrictModeChanged,
+            ),
+          ],
         ),
       ],
     );
@@ -39,14 +48,14 @@ class RuleAdvancedOptions extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF6366F1), size: 20),
-          const SizedBox(width: 8),
+          MacosIcon(icon, color: MacosColors.systemBlueColor, size: 20),
+          const Gap(8),
           Text(
             title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white70,
+              color: MacosColors.systemGrayColor,
             ),
           ),
         ],

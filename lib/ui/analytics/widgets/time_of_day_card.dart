@@ -1,9 +1,10 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:gap/gap.dart';
 import 'package:restructed/backend/analytics/block_attempt.dart';
 
-/// A widget that displays a bar chart showing what time of day the user is most distracted.
 class TimeOfDayCard extends StatelessWidget {
   final List<BlockAttempt> attempts;
 
@@ -32,9 +33,12 @@ class TimeOfDayCard extends StatelessWidget {
     final maxVal = [morning, afternoon, evening, night].reduce(max).toDouble();
     final maxValueWithPadding = maxVal > 0 ? maxVal * 1.2 : 5.0;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: MacosTheme.of(context).canvasColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MacosColors.systemGrayColor.withValues(alpha: 0.2)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -42,11 +46,9 @@ class TimeOfDayCard extends StatelessWidget {
           children: [
             Text(
               'When Are You Distracted?',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: MacosTheme.of(context).typography.title2.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 32),
+            const Gap(32),
             SizedBox(
               height: 200,
               child: BarChart(
@@ -60,9 +62,9 @@ class TimeOfDayCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
-                          const style = TextStyle(
+                          final style = MacosTheme.of(context).typography.caption1.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            color: MacosColors.systemGrayColor,
                           );
                           String text;
                           switch (value.toInt()) {
@@ -102,10 +104,10 @@ class TimeOfDayCard extends StatelessWidget {
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   barGroups: [
-                    makeGroup(0, morning.toDouble(), Colors.orangeAccent),
-                    makeGroup(1, afternoon.toDouble(), Colors.blueAccent),
-                    makeGroup(2, evening.toDouble(), Colors.deepPurpleAccent),
-                    makeGroup(3, night.toDouble(), Colors.indigoAccent),
+                    makeGroup(0, morning.toDouble(), MacosColors.systemOrangeColor),
+                    makeGroup(1, afternoon.toDouble(), MacosColors.systemBlueColor),
+                    makeGroup(2, evening.toDouble(), MacosColors.systemPurpleColor),
+                    makeGroup(3, night.toDouble(), MacosColors.systemIndigoColor),
                   ],
                 ),
               ),
