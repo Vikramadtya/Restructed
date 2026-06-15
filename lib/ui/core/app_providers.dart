@@ -81,11 +81,12 @@ final authStatusProvider = NotifierProvider<AuthStatusNotifier, bool>(() {
   return AuthStatusNotifier();
 });
 
-// Daemon Layer
 final daemonConnectionManagerProvider = Provider<DaemonConnectionManager>((ref) {
   final logger = getIt<Logger>();
   final launcher = ref.read(daemonLauncherProvider);
-  final manager = DaemonConnectionManager(logger, launcher);
+  final manager = DaemonConnectionManager(logger, launcher, () {
+    ref.read(authStatusProvider.notifier).checkAuth();
+  });
   // Auto-connect on startup
   manager.connect();
   ref.onDispose(() => manager.dispose());

@@ -9,12 +9,13 @@ import 'package:restructed/backend/daemon_client/daemon_launcher.dart';
 class DaemonConnectionManager {
   final Logger logger;
   final DaemonLauncher launcher;
+  final void Function() onAuthLost;
   Socket? socket;
   final eventController = StreamController<Map<String, dynamic>>.broadcast();
   bool isConnecting = false;
   Timer? reconnectTimer;
 
-  DaemonConnectionManager(this.logger, this.launcher);
+  DaemonConnectionManager(this.logger, this.launcher, this.onAuthLost);
 
   Stream<Map<String, dynamic>> get events => eventController.stream;
 
@@ -26,6 +27,7 @@ class DaemonConnectionManager {
       logger.i('Attempting to connect to Daemon on 127.0.0.1:8193...');
       socket = await Socket.connect(InternetAddress.loopbackIPv4, 8193, timeout: const Duration(seconds: 2));
       isConnecting = false;
+      failedAttempts = 0;
       logger.i('Connected to Daemon successfully.');
 
       socket!.listen(
@@ -58,6 +60,8 @@ class DaemonConnectionManager {
     }
   }
 
+  int failedAttempts = 0;
+
   void handleDisconnect() {
     socket?.destroy();
     socket = null;
@@ -65,6 +69,14 @@ class DaemonConnectionManager {
     
     if (launcher.hasUserCancelled) {
       logger.w('Not scheduling reconnect because user cancelled authentication.');
+      return;
+    }
+
+    failedAttempts++;
+    if (failedAttempts >= 3) {
+      logger.w('Daemon unreachable after 3 attempts. Clearing token to require re-authentication.');
+      launcher.stopDaemon();
+      onAuthLost();
       return;
     }
 

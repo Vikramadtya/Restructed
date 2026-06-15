@@ -97,9 +97,15 @@ class DaemonEnforcer {
             exit(1);
           },
           onDone: () {
-            stdout.writeln('[DaemonEnforcer] TCP client disconnected. Assuming app closed. Exiting daemon to prevent dangling processes.');
+            stdout.writeln('[DaemonEnforcer] TCP client disconnected. Waiting 10 seconds for reconnect before exiting...');
             client.destroy();
-            exit(0);
+            hasConnected = false;
+            Timer(const Duration(seconds: 10), () {
+              if (!hasConnected) {
+                stdout.writeln('[DaemonEnforcer] No reconnect within 10s. Exiting daemon to prevent dangling processes.');
+                exit(0);
+              }
+            });
           },
         );
       });
