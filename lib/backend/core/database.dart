@@ -44,8 +44,8 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'restructed', 'app_db.sqlite'));
+    final dbFolder = await getApplicationSupportDirectory();
+    final file = File(p.join(dbFolder.path, 'app_db.sqlite'));
 
     if (!await file.parent.exists()) {
       await file.parent.create(recursive: true);
