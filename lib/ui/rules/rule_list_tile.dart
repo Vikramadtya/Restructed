@@ -184,7 +184,7 @@ class _RuleListTileState extends ConsumerState<RuleListTile> {
                         ),
                       Switch(
                         value: widget.rule.isActive,
-                        activeColor: theme.colorScheme.primary,
+                        activeThumbColor: theme.colorScheme.primary,
                         onChanged: !isCategoryActive
                             ? null
                             : (val) async {

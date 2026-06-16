@@ -105,7 +105,7 @@ class RuleEnforcementLogic extends StatelessWidget {
             ),
             Switch(
               value: isIndefinite,
-              activeColor: theme.colorScheme.primary,
+              activeThumbColor: theme.colorScheme.primary,
               onChanged: onIndefiniteChanged,
             ),
           ],

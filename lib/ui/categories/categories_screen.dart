@@ -297,7 +297,7 @@ class _CategoryCardState extends ConsumerState<CategoryCard> {
                     const Spacer(),
                     Switch(
                       value: widget.category.isActive,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: (val) async {
                         try {
                           final daemonApi = ref.read(daemonApiProvider);

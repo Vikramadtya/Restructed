@@ -19,7 +19,6 @@ class AppTheme {
         primary: primaryAccent,
         secondary: secondaryAccent,
         surface: surfaceDark,
-        background: backgroundDark,
         onPrimary: Colors.white,
         onSurface: textPrimary,
       ),

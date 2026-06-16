@@ -91,10 +91,14 @@ class AnalyticsScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Analytics Dashboard',
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-              ).animate().fadeIn().slideX(),
+              Expanded(
+                child: Text(
+                  'Analytics Dashboard',
+                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ).animate().fadeIn().slideX(),
+              ),
               FocusScoreGauge(
                 score: isLoading ? 85 : focusScore,
               ).animate().fadeIn().scale(),

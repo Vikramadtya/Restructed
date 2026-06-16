@@ -42,7 +42,7 @@ class RuleAdvancedOptions extends StatelessWidget {
               ),
               Switch(
                 value: isStrictMode,
-                activeColor: Colors.redAccent,
+                activeThumbColor: Colors.redAccent,
                 onChanged: onStrictModeChanged,
               ),
             ],

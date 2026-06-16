@@ -109,7 +109,7 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       Switch(
                         value: isDark,
-                        activeColor: theme.colorScheme.primary,
+                        activeThumbColor: theme.colorScheme.primary,
                         onChanged: (val) {
                           ref.read(themeProvider.notifier).toggleTheme();
                         },
@@ -156,7 +156,7 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             Switch(
                               value: ref.watch(settingsServiceProvider).disablePrivateRelay,
-                              activeColor: theme.colorScheme.primary,
+                              activeThumbColor: theme.colorScheme.primary,
                               onChanged: (val) async {
                                 await ref.read(settingsServiceProvider).setDisablePrivateRelay(val);
                                 await ref.read(daemonApiProvider).triggerSync();

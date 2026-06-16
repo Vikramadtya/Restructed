@@ -358,7 +358,7 @@ class CategoryDialogWrapperState extends ConsumerState<CategoryDialogWrapper> {
                       ),
                       Switch(
                         value: isActive,
-                        activeColor: theme.colorScheme.primary,
+                        activeThumbColor: theme.colorScheme.primary,
                         onChanged: (val) => setState(() => isActive = val),
                       ),
                     ],
